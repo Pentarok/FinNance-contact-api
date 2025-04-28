@@ -9,7 +9,7 @@ const port = 5000;
 
 // Middleware
 app.use(cors({
-    origin:"https://church-frontend-kappa.vercel.app",
+    origin:"http://localhost:5173",
     methods:["GET","POST"],
     credentials: true
 }));
