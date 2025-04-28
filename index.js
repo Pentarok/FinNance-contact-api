@@ -65,6 +65,5 @@ app.use('*', (req, res) => {
   res.status(404).send('Hello from PortFolio API');
 });
 
-
-
+module.exports = app;  // <-- for Vercel
 
