@@ -7,7 +7,7 @@ const app = express();
 
 // CORS Middleware
 app.use(cors({
-  origin: process.env.FRONT_END_URL,   // e.g., http://localhost:5173
+  origin: process.env.FRONT_END_URL,
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -16,7 +16,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Setup nodemailer transporter
+// Manually handle preflight OPTIONS requests (Vercel needs this)
+app.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', process.env.FRONT_END_URL);
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.status(200).end();
+});
+
+// Nodemailer transporter
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -25,7 +34,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// POST route to send message
+// POST route
 app.post('/message', async (req, res) => {
   try {
     const { name, email, message } = req.body;
@@ -56,7 +65,6 @@ app.use('*', (req, res) => {
   res.status(404).send('Hello from PortFolio API');
 });
 
-// Start the server
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
-});
+
+
+
