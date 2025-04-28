@@ -5,7 +5,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
-const port = 5000;
+const port = 4000;
 
 // Middleware
 app.use(cors({
@@ -19,7 +19,8 @@ app.use(bodyParser.json());  // To parse JSON payloads
 // Google Sheets API or Apps Script URL
 const googleSheetApiUrl = 'https://script.google.com/macros/s/AKfycbx_ehmjx5rXI4Z14wMGpFgubOyc2dT89FbYYTxfSkUiZ5IJaEXMCSMya9EhDvNwk6xB/exec';
 // Endpoint to handle contact form submissions
-app.post('/api/v1/contact', async (req, res) => {
+app.post('/api/v1/message', async (req, res) => {
+
     const { name, email, message } = req.body;
 
     // Check if the required fields are present
