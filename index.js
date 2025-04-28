@@ -1,69 +1,58 @@
-require('dotenv').config();
+require("dotenv").config();
 const express = require('express');
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 
 const app = express();
+const port = 5000;
 
-// CORS Middleware
+// Middleware
 app.use(cors({
-  origin: process.env.FRONT_END_URL,
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
+    origin:"https://church-frontend-kappa.vercel.app",
+    methods:["GET","POST"],
+    credentials: true
 }));
+app.use(express.json())
+app.use(bodyParser.json());  // To parse JSON payloads
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Manually handle preflight OPTIONS requests (Vercel needs this)
-app.options('*', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONT_END_URL);
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.status(200).end();
-});
-
-// Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-// POST route
-app.post('/message', async (req, res) => {
-  try {
+// Google Sheets API or Apps Script URL
+const googleSheetApiUrl = 'https://script.google.com/macros/s/AKfycbx_ehmjx5rXI4Z14wMGpFgubOyc2dT89FbYYTxfSkUiZ5IJaEXMCSMya9EhDvNwk6xB/exec';
+// Endpoint to handle contact form submissions
+app.post('/api/v1/contact', async (req, res) => {
     const { name, email, message } = req.body;
 
-    const mailOptions = {
-      from: email,
-      to: process.env.EMAIL_USER,
-      subject: 'Message from your website',
-      html: `
-        <p>Name: ${name}</p>
-        <p>Email: ${email}</p>
-        <p>Message: ${message}</p>
-      `
+    // Check if the required fields are present
+    if (!name || !email || !message) {
+        return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
+
+    // Prepare data to be sent to Google Sheets
+    const formData = {
+        name: name,
+        email: email,
+        message: message,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully.');
-    return res.json({ message: 'Email sent successfully.' });
+    try {
+        // Send the data to Google Sheets using Google Apps Script
+        const response = await axios.post(googleSheetApiUrl, formData);
 
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Failed to send email" });
-  }
+        // Check if Google Apps Script responded with success
+        console.log(response)
+        if (response.data.success) {
+            return res.status(200).json({ success: true, message: 'Data successfully submitted' });
+        } else {
+            return res.status(500).json({ success: false, error: 'Failed to submit data' });
+        }
+    } catch (error) {
+        console.error('Error sending data to Google Sheets:', error);
+        return res.status(500).json({ success: false, error: 'Error submitting data' });
+    }
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).send('Hello from PortFolio API');
+// Start server
+app.listen(port, () => {
+    console.log(`Server is up and  running `);
 });
-
-module.exports = app;  // <-- for Vercel
 
